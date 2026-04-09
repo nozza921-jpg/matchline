@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PachinkoMatch</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0D1B35;
+    --navy2: #162244;
+    --gold: #D4A843;
+    --gold2: #F5D06B;
+    --green: #00C896;
+    --red: #FF4D6A;
+    --bg: #F2F4F8;
+    --white: #FFFFFF;
+    --gray: #9AA5BC;
+    --light: #E8EDF8;
+    --border: #DDE3F0;
+    --text: #1A2438;
+    --textmid: #556080;
+    --line: #06C755;
+    --bottom-nav-h: 68px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ── STATUS BAR MOCK ── */
+  .status-bar {
+    background: var(--navy);
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .status-time { color: white; font-size: 15px; font-weight: 700; }
+  .status-icons { color: white; font-size: 12px; display: flex; gap: 6px; align-items: center; }
+
+  /* ── TOP HEADER ── */
+  .header {
+    background: var(--navy);
+    padding: 0 16px 16px;
+    position: sticky;
+    top: 44px;
+    z-index: 99;
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0 12px;
+  }
+  .header-logo {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--white);
+    letter-spacing: 1px;
+  }
+  .header-logo span { color: var(--gold); }
+  .header-icons { display: flex; gap: 10px; }
+  .icon-btn {
+    width: 38px; height: 38px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    border: none;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    position: relative;
+  }
+  .icon-btn .badge {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 9px; height: 9px;
+    background: var(--red);
+    border-radius: 50%;
+    border: 2px solid var(--navy);
+  }
+
+  /* ── TABS IN HEADER ── */
+  .header-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .header-tabs::-webkit-scrollbar { display: none; }
+  .htab {
+    flex-shrink: 0;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.08);
+  }
+  .htab.active {
+    background: var(--gold);
+    color: var(--navy);
+  }
+
+  /* ── SCROLL AREA ── */
+  .scroll-area {
+    padding-bottom: calc(var(--bottom-nav-h) + var(--safe-bottom) + 16px);
+    min-height: calc(100vh - 44px - 100px);
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeUp 0.22s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── URGENT BANNER ── */
+  .urgent-banner {
+    margin: 12px 16px 0;
+    background: linear-gradient(135deg, #FF4D6A, #C0392B);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    active-transform: scale(0.98);
+  }
+  .urgent-banner:active { opacity: 0.88; }
+  .urgent-pulse {
+    width: 12px; height: 12px;
+    background: white;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); }
+    50% { box-shadow: 0 0 0 6px rgba(255,255,255,0); }
+  }
+  .urgent-text h3 { font-size: 13px; font-weight: 700; color: white; }
+  .urgent-text p { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 2px; }
+  .urgent-arrow { margin-left: auto; color: white; font-size: 18px; flex-shrink: 0; }
+
+  /* ── STATS ROW ── */
+  .stats-strip {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .stats-strip::-webkit-scrollbar { display: none; }
+  .stat-pill {
+    flex-shrink: 0;
+    background: var(--white);
+    border-radius: 12px;
+    padding: 12px 16px;
+    min-width: 110px;
+    border: 1px solid var(--border);
+  }
+  .stat-pill-label { font-size: 10px; color: var(--gray); font-weight: 500; margin-bottom: 3px; }
+  .stat-pill-value { font-size: 22px; font-weight: 900; color: var(--text); line-height: 1; }
+  .stat-pill-sub { font-size: 10px; color: var(--green); margin-top: 3px; font-weight: 600; }
+
+  /* ── SECTION ── */
+  .section { padding: 16px 16px 4px; }
+  .section-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .section-title::before {
+    content: '';
+    display: block;
+    width: 4px; height: 16px;
+    background: var(--gold);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .see-all {
+    font-size: 12px;
+    color: var(--gray);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* ── JOB CARD ── */
+  .job-card {
+    background: var(--white);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin: 0 16px 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.12s;
+    box-shadow: 0 2px 8px rgba(13,27,53,0.06);
+  }
+  .job-card:active { transform: scale(0.985); }
+  .job-card-top {
+    padding: 14px 14px 10px;
+  }
+  .job-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+  }
+  .tag-urgent { background: rgba(255,77,106,0.12); color: var(--red); }
+  .tag-new { background: rgba(0,200,150,0.12); color: var(--green); }
+  .tag-normal { background: var(--light); color: var(--textmid); }
+  .job-time { font-size: 11px; color: var(--gray); }
+  .job-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+  .job-meta-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .job-meta-item {
+    font-size: 12px;
+    color: var(--textmid);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .job-card-bottom {
+    padding: 10px 14px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+  .job-pay { font-size: 18px; font-weight: 900; color: var(--navy); }
+  .job-pay span { font-size: 11px; font-weight: 400; color: var(--gray); }
+  .apply-btn {
+    background: var(--navy);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .apply-btn:active { background: var(--gold); color: var(--navy); transform: scale(0.96); }
+
+  /* ── LINE CTA ── */
+  .line-cta {
+    margin: 0 16px 10px;
+    background: var(--line);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .line-cta:active { opacity: 0.88; }
+  .line-icon { font-size: 30px; flex-shrink: 0; }
+  .line-cta-text h3 { font-size: 14px; font-weight: 700; color: white; }
+  .line-cta-text p { font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 2px; }
+  .line-cta-arrow { margin-left: auto; color: white; font-size: 20px; flex-shrink: 0; }
+
+  /* ── KNOWLEDGE CARD ── */
+  .know-card {
+    background: var(--white);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin: 0 16px 10px;
+    padding: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(13,27,53,0.06);
+    position: relative;
+    overflow: hidden;
+  }
+  .know-card:active { opacity: 0.88; }
+  .know-cat { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 1px; margin-bottom: 5px; }
+  .know-title { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.5; margin-bottom: 6px; }
+  .know-desc { font-size: 12px; color: var(--textmid); line-height: 1.7; }
+  .know-footer { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--light); }
+  .know-meta { font-size: 11px; color: var(--gray); }
+  .know-card.locked::after {
+    content: '🔒 プレミアム限定';
+    position: absolute; inset: 0;
+    background: rgba(13,27,53,0.7);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gold2);
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 16px;
+  }
+
+  /* ── FORM ── */
+  .form-wrap { padding: 16px; }
+  .form-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .form-card-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .form-card-sub { font-size: 12px; color: var(--textmid); margin-bottom: 16px; }
+  .fgroup { margin-bottom: 14px; }
+  .fgroup label { display: block; font-size: 12px; font-weight: 600; color: var(--textmid); margin-bottom: 5px; }
+  .fgroup input, .fgroup select, .fgroup textarea {
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    font-size: 15px;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--text);
+    background: var(--white);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border 0.15s;
+  }
+  .fgroup input:focus, .fgroup select:focus, .fgroup textarea:focus {
+    border-color: var(--navy);
+  }
+  .fgroup textarea { resize: none; height: 80px; }
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* ── PLAN CARDS ── */
+  .plan-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .plan-card {
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .plan-card.selected { border-color: var(--gold); background: rgba(212,168,67,0.05); }
+  .plan-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .plan-name { font-size: 15px; font-weight: 700; }
+  .plan-price { font-size: 20px; font-weight: 900; color: var(--navy); }
+  .plan-price span { font-size: 12px; font-weight: 400; color: var(--gray); }
+  .plan-features { font-size: 12px; color: var(--textmid); line-height: 1.8; }
+  .plan-check { font-size: 20px; }
+
+  /* ── BIG CTA BUTTON ── */
+  .big-btn {
+    width: 100%;
+    padding: 17px;
+    border-radius: 14px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: all 0.15s;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .big-btn:active { transform: scale(0.97); }
+  .big-btn-navy { background: var(--navy); color: white; }
+  .big-btn-gold { background: var(--gold); color: var(--navy); }
+  .big-btn-line { background: var(--line); color: white; }
+  .big-btn-outline { background: white; color: var(--textmid); border: 1.5px solid var(--border); }
+
+  /* ── MEMBERS ── */
+  .member-card {
+    background: var(--white);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin: 0 16px 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(13,27,53,0.06);
+  }
+  .member-card:active { opacity: 0.85; }
+  .member-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy), var(--navy2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 700; color: white; flex-shrink: 0;
+  }
+  .member-avatar.gold { background: linear-gradient(135deg, var(--gold), #E8860A); color: var(--navy); }
+  .member-info { flex: 1; min-width: 0; }
+  .member-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .member-sub { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .member-badge {
+    font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; flex-shrink: 0;
+  }
+  .badge-premium { background: rgba(212,168,67,0.15); color: var(--gold); }
+  .badge-light { background: var(--light); color: var(--textmid); }
+  .badge-pending { background: rgba(255,77,106,0.1); color: var(--red); }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    height: var(--bottom-nav-h);
+    padding-bottom: var(--safe-bottom);
+    display: flex;
+    align-items: center;
+    z-index: 100;
+    box-shadow: 0 -4px 20px rgba(13,27,53,0.1);
+  }
+  .bnav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    padding: 8px 0;
+    border: none;
+    background: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .bnav-item:active { opacity: 0.7; }
+  .bnav-icon { font-size: 22px; transition: transform 0.15s; }
+  .bnav-label { font-size: 10px; font-weight: 600; color: var(--gray); transition: color 0.15s; }
+  .bnav-item.active .bnav-label { color: var(--navy); }
+  .bnav-item.active .bnav-icon { transform: scale(1.15); }
+  .bnav-notif {
+    position: absolute; top: 6px; right: calc(50% - 16px);
+    width: 8px; height: 8px;
+    background: var(--red); border-radius: 50%; border: 2px solid white;
+  }
+
+  /* ── POST FAB (center button) ── */
+  .bnav-fab {
+    flex-shrink: 0;
+    width: 56px; height: 56px;
+    background: var(--gold);
+    border-radius: 50%;
+    border: none;
+    font-size: 26px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: -20px;
+    box-shadow: 0 4px 16px rgba(212,168,67,0.5);
+    transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .bnav-fab:active { transform: scale(0.92); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: calc(var(--bottom-nav-h) + 12px);
+    left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--navy);
+    color: white;
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transition: all 0.28s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 999;
+    box-shadow: 0 6px 20px rgba(13,27,53,0.25);
+    max-width: 90%;
+    white-space: normal;
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── EMPTY STATE ── */
+  .empty { padding: 40px 20px; text-align: center; }
+  .empty-icon { font-size: 44px; margin-bottom: 10px; }
+  .empty p { font-size: 13px; color: var(--gray); line-height: 1.7; }
+
+  /* ── MY PAGE ── */
+  .my-header {
+    background: var(--navy);
+    padding: 20px 16px 24px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .my-avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), #E8860A);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 700; color: var(--navy); flex-shrink: 0;
+  }
+  .my-info h2 { font-size: 17px; font-weight: 700; color: white; }
+  .my-info p { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 3px; }
+  .my-plan-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--gold); color: var(--navy);
+    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; margin-top: 6px;
+  }
+  .my-menu { padding: 12px 16px; }
+  .my-menu-item {
+    background: white; border-radius: 14px; padding: 16px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px; cursor: pointer; border: 1px solid var(--border);
+  }
+  .my-menu-item:active { opacity: 0.8; }
+  .my-menu-icon { font-size: 22px; width: 36px; text-align: center; }
+  .my-menu-label { font-size: 14px; font-weight: 600; color: var(--text); }
+  .my-menu-sub { font-size: 12px; color: var(--gray); margin-top: 1px; }
+  .my-menu-arrow { margin-left: auto; color: var(--gray); font-size: 16px; }
+
+  /* scrollbar hidden globally */
+  ::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
+</style>
+</head>
+<body>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <span class="status-time" id="clock">9:41</span>
+  <div class="status-icons">
+    <span>●●●</span>
+    <span>WiFi</span>
+    <span>🔋</span>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header" id="main-header">
+  <div class="header-row">
+    <div class="header-logo">MATCH<span>LINE</span></div>
+    <div class="header-icons">
+      <button class="icon-btn" onclick="showToast('📩 新着案件が2件あります')">🔔<span class="badge"></span></button>
+      <button class="icon-btn" onclick="showPage('mypage')">👤</button>
+    </div>
+  </div>
+  <div class="header-tabs" id="header-tabs">
+    <button class="htab active" onclick="filterJobs('all', this)">すべて</button>
+    <button class="htab" onclick="filterJobs('urgent', this)">🔴 緊急</button>
+    <button class="htab" onclick="filterJobs('new', this)">🟢 新着</button>
+    <button class="htab" onclick="filterJobs('kanagawa', this)">神奈川</button>
+    <button class="htab" onclick="filterJobs('tokyo', this)">東京</button>
+    <button class="htab" onclick="filterJobs('saitama', this)">埼玉</button>
+  </div>
+</div>
+
+<!-- SCROLL AREA -->
+<div class="scroll-area">
+
+  <!-- ===== HOME ===== -->
+  <div class="page active" id="page-home">
+
+    <!-- Urgent alert -->
+    <div class="urgent-banner" onclick="applyJob('横浜・入替工事')">
+      <div class="urgent-pulse"></div>
+      <div class="urgent-text">
+        <h3>⚡ 緊急募集 — 今すぐ応募できます</h3>
+        <p>横浜市 / 明日19時〜 / 日当 ¥25,000 / あと1名</p>
+      </div>
+      <div class="urgent-arrow">›</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-strip">
+      <div class="stat-pill">
+        <div class="stat-pill-label">登録会員</div>
+        <div class="stat-pill-value">47社</div>
+        <div class="stat-pill-sub">▲ +8 今月</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-label">今月の案件</div>
+        <div class="stat-pill-value">23件</div>
+        <div class="stat-pill-sub">▲ +5 先月比</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-label">マッチング率</div>
+        <div class="stat-pill-value">82%</div>
+        <div class="stat-pill-sub">成立 19件</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-label">今月の収入</div>
+        <div class="stat-pill-value">¥142K</div>
+        <div class="stat-pill-sub">▲ +¥38K</div>
+      </div>
+    </div>
+
+    <!-- LINE CTA -->
+    <div class="line-cta" onclick="showToast('💬 LINEアプリが開きます（デモ）')">
+      <div class="line-icon">💬</div>
+      <div class="line-cta-text">
+        <h3>LINEで即通知を受け取る</h3>
+        <p>新着案件・マッチング結果をリアルタイムで</p>
+      </div>
+      <div class="line-cta-arrow">›</div>
+    </div>
+
+    <!-- Jobs section -->
+    <div class="section">
+      <div class="section-row">
+        <div class="section-title">直近の案件</div>
+        <button class="see-all" onclick="showPage('jobs')">すべて見る ›</button>
+      </div>
+    </div>
+
+    <div class="job-card" id="job-yokohama">
+      <div class="job-card-top">
+        <div class="job-card-header">
+          <span class="tag tag-urgent">🔴 緊急</span>
+          <span class="job-time">本日 14:30</span>
+        </div>
+        <div class="job-title">横浜・入替工事 補助1名（明日19時〜）</div>
+        <div class="job-meta-row">
+          <span class="job-meta-item">📍 横浜市西区</span>
+          <span class="job-meta-item">🕐 約5時間</span>
+          <span class="job-meta-item">👤 あと1名</span>
+        </div>
+      </div>
+      <div class="job-card-bottom">
+        <div class="job-pay">¥25,000 <span>/ 日当</span></div>
+        <button class="apply-btn" onclick="applyJob('横浜・入替工事')">応募する</button>
+      </div>
+    </div>
+
+    <div class="job-card">
+      <div class="job-card-top">
+        <div class="job-card-header">
+          <span class="tag tag-new">🟢 新着</span>
+          <span class="job-time">本日 11:00</span>
+        </div>
+        <div class="job-title">川崎・定期メンテナンス 経験者2名</div>
+        <div class="job-meta-row">
+          <span class="job-meta-item">📍 川崎市</span>
+          <span class="job-meta-item">🕐 終日</span>
+          <span class="job-meta-item">👤 あと2名</span>
+        </div>
+      </div>
+      <div class="job-card-bottom">
+        <div class="job-pay">¥30,000 <span>/ 日当</span></div>
+        <button class="apply-btn" onclick="applyJob('川崎・メンテナンス')">応募する</button>
+      </div>
+    </div>
+
+    <!-- Knowledge preview -->
+    <div class="section" style="margin-top:4px">
+      <div class="section-row">
+        <div class="section-title">最新ナレッジ</div>
+        <button class="see-all" onclick="showPage('knowledge')">すべて見る ›</button>
+      </div>
+    </div>
+
+    <div class="know-card" onclick="showPage('knowledge')">
+      <div class="know-cat">🆕 NEW · 機種情報</div>
+      <div class="know-title">CR大海物語5 設置時の注意点まとめ</div>
+      <div class="know-desc">ハーネス接続順序・設定確認手順など現場で必須の情報を網羅。</div>
+      <div class="know-footer">
+        <span class="know-meta">📅 2024/01/15</span>
+        <span class="know-meta">👁 142</span>
+      </div>
+    </div>
+
+    <div class="know-card locked" onclick="showToast('⭐ プレミアム会員限定のコンテンツです')">
+      <div class="know-cat">Tips · 効率化</div>
+      <div class="know-title">入替工事を30分短縮できる段取りのコツ</div>
+    </div>
+
+  </div>
+
+  <!-- ===== JOBS ===== -->
+  <div class="page" id="page-jobs">
+    <div style="height:10px"></div>
+
+    <div class="job-card urgent-card" data-area="kanagawa" data-type="urgent">
+      <div class="job-card-top">
+        <div class="job-card-header"><span class="tag tag-urgent">🔴 緊急</span><span class="job-time">本日 14:30</span></div>
+        <div class="job-title">横浜・入替工事 補助1名（明日19時〜）</div>
+        <div class="job-meta-row">
+          <span class="job-meta-item">📍 横浜市西区</span>
+          <span class="job-meta-item">🕐 約5時間</span>
+          <span class="job-meta-item">👤 あと1名</span>
+        </div>
+      </div>
+      <div class="job-card-bottom">
+        <div class="job-pay">¥25,000 <span>/ 日当</span></div>
+        <button class="apply-btn" onclick="applyJob('横浜・入替工事')">応募する</button>
+      </div>
+    </div>
+
+    <div class="job-card" data-area="kanagawa" data-type="new">
+      <div class="job-card-top">
+        <div class="job-card-header"><span class="tag tag-new">🟢 新着</span><span class="job-time">本日 11:00</span></div>
+        <div class="job-title">川崎・定期メンテナンス 経験者2名</div>
+        <div class="job-meta-row">
+          <span class="job-meta-item">📍 川崎市</span><span class="job-meta-item">🕐 終日</span><span class="job-meta-item">👤 あと2名</span>
+        </div>
+      </div>
+      <div class="job-card-bottom">
+        <div class="job-pay">¥30,000 <span>/ 日当</span></div>
+        <button class="apply-btn" onclick="applyJob('川崎・メンテナンス')">応募する</button>
+      </div>
+    </div>
+
+    <div class="job-card" data-area="tokyo" data-type="normal">
+      <div class="job-card-top">
+        <div class="job-card-header"><span class="tag tag-normal">📋 通常</span><span class="job-time">昨日 20:00</span></div>
+        <div class="job-title">渋谷・新規設置工事 2名募集</div>
+        <div class="job-meta-row">
+          <span class="job-meta-item">📍 渋谷区</span><span class="job-meta-item">🕐 8時間</span><span class="job-meta-item">👤 あと2名</span>
+        </div>
+      </div>
+      <div class="job-card-bottom">
+        <div class="job-pay">¥28,000 <span>/ 日当</span></div>
+        <button class="apply-btn" onclick="applyJob('渋谷・新規設置')">応募する</button>
+      </div>
+    </div>
+
+    <div class="job-card" data-area="saitama" data-type="normal">
+      <div class="job-card-top">
+        <div class="job-card-header"><span class="tag tag-normal">📋 通常</span><span class="job-time">1/14</span></div>
+        <div class="job-title">さいたま・パチスロ入替 経験者優遇</div>
+        <div class="job-meta-row">
+          <span class="job-meta-item">📍 さいたま市</span><span class="job-meta-item">🕐 約6時間</span><span class="job-meta-item">👤 あと1名</span>
+        </div>
+      </div>
+      <div class="job-card-bottom">
+        <div class="job-pay">¥22,000 <span>/ 日当</span></div>
+        <button class="apply-btn" onclick="applyJob('さいたま・パチスロ入替')">応募する</button>
+      </div>
+    </div>
+
+    <div class="job-card" data-area="kanagawa" data-type="urgent">
+      <div class="job-card-top">
+        <div class="job-card-header"><span class="tag tag-urgent">🔴 緊急</span><span class="job-time">本日 16:00</span></div>
+        <div class="job-title">千葉・閉店後メンテ 深夜作業 1名</div>
+        <div class="job-meta-row">
+          <span class="job-meta-item">📍 千葉市</span><span class="job-meta-item">🌙 深夜23時〜</span><span class="job-meta-item">👤 あと1名</span>
+        </div>
+      </div>
+      <div class="job-card-bottom">
+        <div class="job-pay">¥35,000 <span>/ 夜勤込</span></div>
+        <button class="apply-btn" onclick="applyJob('千葉・深夜メンテ')">応募する</button>
+      </div>
+    </div>
+
+    <div class="job-card" data-area="kanagawa" data-type="new">
+      <div class="job-card-top">
+        <div class="job-card-header"><span class="tag tag-new">🟢 新着</span><span class="job-time">本日 09:00</span></div>
+        <div class="job-title">横浜・新機種一斉設置 5名募集（来週）</div>
+        <div class="job-meta-row">
+          <span class="job-meta-item">📍 横浜市</span><span class="job-meta-item">🕐 2日間</span><span class="job-meta-item">👤 あと5名</span>
+        </div>
+      </div>
+      <div class="job-card-bottom">
+        <div class="job-pay">¥55,000 <span>/ 2日分</span></div>
+        <button class="apply-btn" onclick="applyJob('横浜・一斉設置')">応募する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== POST ===== -->
+  <div class="page" id="page-post">
+    <div class="form-wrap">
+      <div class="form-card">
+        <div class="form-card-title">📤 案件を出す</div>
+        <div class="form-card-sub">投稿すると登録会員全員にLINEで即時通知されます</div>
+
+        <div class="fgroup">
+          <label>案件タイトル *</label>
+          <input type="text" placeholder="例：横浜・入替工事 補助1名">
+        </div>
+        <div class="input-row">
+          <div class="fgroup">
+            <label>都道府県 *</label>
+            <select>
+              <option>神奈川県</option><option>東京都</option><option>埼玉県</option>
+              <option>千葉県</option><option>大阪府</option>
+            </select>
+          </div>
+          <div class="fgroup">
+            <label>市区町村 *</label>
+            <input type="text" placeholder="横浜市西区">
+          </div>
+        </div>
+        <div class="input-row">
+          <div class="fgroup">
+            <label>作業日 *</label>
+            <input type="date">
+          </div>
+          <div class="fgroup">
+            <label>開始時間 *</label>
+            <input type="time" value="19:00">
+          </div>
+        </div>
+        <div class="input-row">
+          <div class="fgroup">
+            <label>募集人数 *</label>
+            <select><option>1名</option><option>2名</option><option>3名</option><option>5名以上</option></select>
+          </div>
+          <div class="fgroup">
+            <label>日当（円） *</label>
+            <input type="number" placeholder="25000">
+          </div>
+        </div>
+        <div class="fgroup">
+          <label>作業種別 *</label>
+          <select><option>入替工事</option><option>新規設置</option><option>定期メンテナンス</option><option>撤去作業</option><option>その他</option></select>
+        </div>
+        <div class="fgroup">
+          <label>緊急度</label>
+          <select><option>通常</option><option>🔴 緊急（本日〜明日）</option></select>
+        </div>
+        <div class="fgroup">
+          <label>備考・必要スキル</label>
+          <textarea placeholder="機種名・持参工具・注意点など"></textarea>
+        </div>
+      </div>
+
+      <button class="big-btn big-btn-gold" onclick="showToast('📤 投稿しました！LINE通知を送信中...')">
+        📤 投稿してLINE通知する
+      </button>
+      <button class="big-btn big-btn-outline" onclick="showPage('home')">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- ===== KNOWLEDGE ===== -->
+  <div class="page" id="page-knowledge">
+    <div style="background:linear-gradient(135deg,var(--navy),var(--navy2));padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+      <div style="font-size:26px">⭐</div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:white">プレミアム限定のナレッジが読めます</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:2px">月3〜5万円で現場の一次情報を随時配信</div>
+      </div>
+    </div>
+
+    <div class="know-card" onclick="showToast('📖 記事を開きます（デモ）')">
+      <div class="know-cat">🆕 NEW · 機種情報</div>
+      <div class="know-title">CR大海物語5 設置時の注意点まとめ</div>
+      <div class="know-desc">ハーネス接続順序・設定確認手順など、初現場でも迷わない情報を網羅。</div>
+      <div class="know-footer"><span class="know-meta">📅 2024/01/15</span><span class="know-meta">👁 142</span></div>
+    </div>
+
+    <div class="know-card" onclick="showToast('📖 記事を開きます（デモ）')">
+      <div class="know-cat">⚡ TIPS · 効率化</div>
+      <div class="know-title">入替工事を30分短縮できる段取りのコツ</div>
+      <div class="know-desc">準備〜撤収まで、ベテランが実践する効率化の手順を解説。</div>
+      <div class="know-footer"><span class="know-meta">📅 2024/01/10</span><span class="know-meta">👁 98</span></div>
+    </div>
+
+    <div class="know-card" onclick="showToast('📖 記事を開きます（デモ）')">
+      <div class="know-cat">🚨 ALERT · 不具合情報</div>
+      <div class="know-title">最新機種・電源投入時の不具合と対処法</div>
+      <div class="know-desc">現場から集まった不具合情報とリセット手順を随時更新。</div>
+      <div class="know-footer"><span class="know-meta">📅 2024/01/08</span><span class="know-meta">👁 211</span></div>
+    </div>
+
+    <div class="know-card locked" onclick="showToast('⭐ プレミアム会員限定のコンテンツです')">
+      <div class="know-cat">設置ノウハウ</div>
+      <div class="know-title">スロット台の配線ミスを防ぐ確認フロー完全版</div>
+    </div>
+
+    <div class="know-card locked" onclick="showToast('⭐ プレミアム会員限定のコンテンツです')">
+      <div class="know-cat">機種情報</div>
+      <div class="know-title">2024年上半期 新台設置注意点まとめ（12機種）</div>
+    </div>
+
+    <div class="know-card locked" onclick="showToast('⭐ プレミアム会員限定のコンテンツです')">
+      <div class="know-cat">Tips</div>
+      <div class="know-title">深夜工事の効率を上げる照明・工具セットアップ</div>
+    </div>
+  </div>
+
+  <!-- ===== MY PAGE ===== -->
+  <div class="page" id="page-mypage">
+    <div class="my-header">
+      <div class="my-avatar">石</div>
+      <div class="my-info">
+        <h2>石郷工事 株式会社</h2>
+        <p>神奈川県 / 経験10年以上</p>
+        <div class="my-plan-badge">⭐ プレミアム会員</div>
+      </div>
+    </div>
+    <div class="my-menu">
+      <div class="my-menu-item" onclick="showPage('register')">
+        <div class="my-menu-icon">✏️</div>
+        <div>
+          <div class="my-menu-label">プロフィール編集</div>
+          <div class="my-menu-sub">会社情報・スキルの更新</div>
+        </div>
+        <div class="my-menu-arrow">›</div>
+      </div>
+      <div class="my-menu-item" onclick="showToast('📋 応募履歴を表示します（デモ）')">
+        <div class="my-menu-icon">📋</div>
+        <div>
+          <div class="my-menu-label">応募履歴</div>
+          <div class="my-menu-sub">過去の応募・稼働記録</div>
+        </div>
+        <div class="my-menu-arrow">›</div>
+      </div>
+      <div class="my-menu-item" onclick="showToast('💰 収入明細を表示します（デモ）')">
+        <div class="my-menu-icon">💰</div>
+        <div>
+          <div class="my-menu-label">収入明細</div>
+          <div class="my-menu-sub">今月 ¥142,000</div>
+        </div>
+        <div class="my-menu-arrow">›</div>
+      </div>
+      <div class="my-menu-item" onclick="showToast('💬 LINEアプリが開きます（デモ）')">
+        <div class="my-menu-icon">💬</div>
+        <div>
+          <div class="my-menu-label">LINE通知設定</div>
+          <div class="my-menu-sub">通知の種類・エリアを設定</div>
+        </div>
+        <div class="my-menu-arrow">›</div>
+      </div>
+      <div class="my-menu-item" onclick="showToast('⭐ プレミアムプランの詳細（デモ）')">
+        <div class="my-menu-icon">⭐</div>
+        <div>
+          <div class="my-menu-label">プランを変更</div>
+          <div class="my-menu-sub">現在：プレミアム ¥30,000/月</div>
+        </div>
+        <div class="my-menu-arrow">›</div>
+      </div>
+      <div style="height:8px"></div>
+      <button class="big-btn big-btn-line" onclick="showToast('💬 LINEを開きます（デモ）')">
+        💬 公式LINEを友だち追加
+      </button>
+      <button class="big-btn big-btn-outline" onclick="showPage('register')">
+        新規会員を紹介する
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== REGISTER ===== -->
+  <div class="page" id="page-register">
+    <div class="form-wrap">
+      <div class="form-card">
+        <div class="form-card-title">✏️ 会員登録</div>
+        <div class="form-card-sub">登録後24時間以内にLINEで審査結果をお知らせします</div>
+
+        <div class="fgroup">
+          <label>会社名 *</label>
+          <input type="text" placeholder="例：石郷工事 株式会社">
+        </div>
+        <div class="fgroup">
+          <label>担当者名 *</label>
+          <input type="text" placeholder="例：石郷 太郎">
+        </div>
+        <div class="fgroup">
+          <label>電話番号 *</label>
+          <input type="tel" placeholder="090-0000-0000" inputmode="tel">
+        </div>
+        <div class="fgroup">
+          <label>主なエリア *</label>
+          <select>
+            <option>神奈川県</option><option>東京都</option><option>埼玉県</option>
+            <option>千葉県</option><option>大阪府</option>
+          </select>
+        </div>
+        <div class="fgroup">
+          <label>得意な作業</label>
+          <textarea placeholder="入替工事・新規設置・深夜作業可 など"></textarea>
+        </div>
+        <div class="fgroup">
+          <label>紹介者（任意）</label>
+          <input type="text" placeholder="石郷様よりご紹介">
+        </div>
+      </div>
+
+      <div style="padding: 0 0 4px; font-size:13px; font-weight:700; color:var(--textmid);">プランを選ぶ</div>
+      <div class="plan-row">
+        <div class="plan-card selected" id="plan-light" onclick="selectPlan('light')">
+          <div class="plan-card-header">
+            <div>
+              <div class="plan-name">🔹 ライトプラン</div>
+              <div class="plan-price">¥300〜500 <span>/ 月</span></div>
+            </div>
+            <div class="plan-check" id="check-light">✅</div>
+          </div>
+          <div class="plan-features">✔ 案件の閲覧・応募<br>✔ マッチング通知（LINE）</div>
+        </div>
+        <div class="plan-card" id="plan-premium" onclick="selectPlan('premium')">
+          <div class="plan-card-header">
+            <div>
+              <div class="plan-name">⭐ プレミアムプラン</div>
+              <div class="plan-price">¥30,000〜 <span>/ 月</span></div>
+            </div>
+            <div class="plan-check" id="check-premium">○</div>
+          </div>
+          <div class="plan-features">✔ ライトの全機能<br>✔ 優先マッチング<br>✔ ナレッジ全閲覧</div>
+        </div>
+      </div>
+
+      <button class="big-btn big-btn-gold" onclick="showToast('✅ 登録完了！24時間以内にLINEでご連絡します')">
+        登録してLINEで確認
+      </button>
+    </div>
+  </div>
+
+</div><!-- /scroll-area -->
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="bnav-item active" id="bnav-home" onclick="showPage('home')">
+    <div class="bnav-icon">🏠</div>
+    <div class="bnav-label">ホーム</div>
+  </button>
+  <button class="bnav-item" id="bnav-jobs" onclick="showPage('jobs')">
+    <div class="bnav-icon">🔧</div>
+    <div class="bnav-label">案件</div>
+    <div class="bnav-notif"></div>
+  </button>
+  <button class="bnav-fab" onclick="showPage('post')">＋</button>
+  <button class="bnav-item" id="bnav-knowledge" onclick="showPage('knowledge')">
+    <div class="bnav-icon">📚</div>
+    <div class="bnav-label">ナレッジ</div>
+  </button>
+  <button class="bnav-item" id="bnav-mypage" onclick="showPage('mypage')">
+    <div class="bnav-icon">👤</div>
+    <div class="bnav-label">マイページ</div>
+  </button>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // Clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+  }
+  updateClock();
+  setInterval(updateClock, 10000);
+
+  // Page navigation
+  const pageMap = {
+    home: { nav: 'bnav-home', title: null },
+    jobs: { nav: 'bnav-jobs', title: null },
+    post: { nav: null, title: null },
+    knowledge: { nav: 'bnav-knowledge', title: null },
+    mypage: { nav: 'bnav-mypage', title: null },
+    register: { nav: null, title: null },
+  };
+
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+
+    document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+    const nav = pageMap[id]?.nav;
+    if (nav) document.getElementById(nav)?.classList.add('active');
+
+    // Show/hide header tabs
+    const hdr = document.getElementById('header-tabs');
+    hdr.style.display = (id === 'home' || id === 'jobs') ? 'flex' : 'none';
+
+    window.scrollTo(0, 0);
+  }
+
+  // Tab filter for jobs
+  function filterJobs(filter, el) {
+    el.parentNode.querySelectorAll('.htab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+
+    showPage('jobs');
+
+    const cards = document.querySelectorAll('#page-jobs .job-card');
+    cards.forEach(card => {
+      const area = card.dataset.area || '';
+      const type = card.dataset.type || '';
+      if (filter === 'all') card.style.display = '';
+      else if (filter === 'urgent') card.style.display = type === 'urgent' ? '' : 'none';
+      else if (filter === 'new') card.style.display = type === 'new' ? '' : 'none';
+      else card.style.display = area === filter ? '' : 'none';
+    });
+  }
+
+  // Apply
+  function applyJob(name) {
+    showToast('✅ ' + name + 'に応募しました！\nLINEで確認メッセージが届きます');
+  }
+
+  // Plan select
+  function selectPlan(plan) {
+    ['light', 'premium'].forEach(p => {
+      document.getElementById('plan-' + p).classList.remove('selected');
+      document.getElementById('check-' + p).textContent = '○';
+    });
+    document.getElementById('plan-' + plan).classList.add('selected');
+    document.getElementById('check-' + plan).textContent = '✅';
+  }
+
+  // Toast
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Init
+  showPage('home');
+</script>
+</body>
+</html>
